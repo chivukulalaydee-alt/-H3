@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#17201c" />
+    <title>墨匠 H3 视频 API 工作台</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">墨</div>
+        <div>
+          <p class="eyebrow">H3 VIDEO API</p>
+          <h1>视频生成工作台</h1>
+        </div>
+      </div>
+      <div class="topbar-meta">
+        <span class="connection" id="local-status"><span class="status-dot"></span>本地代理已连接</span>
+        <span class="price-tag">预计 <strong>$0.10</strong> / 次</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="request-column" aria-labelledby="request-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">REQUEST</p>
+            <h2 id="request-title">生成配置</h2>
+          </div>
+          <button class="text-button" id="test-key" type="button">验证密钥</button>
+        </div>
+
+        <form id="generation-form" novalidate>
+          <div class="field-group key-group">
+            <label for="api-key">API 密钥</label>
+            <div class="key-control">
+              <input id="api-key" name="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="输入用户创建的 API 密钥" required />
+              <button class="icon-button" id="toggle-key" type="button" aria-label="显示 API 密钥" title="显示或隐藏 API 密钥">显示</button>
+            </div>
+            <p class="field-note">只在本机内存中使用，不会保存到浏览器历史或磁盘。</p>
+          </div>
+
+          <div class="field-group">
+            <div class="label-row">
+              <label for="prompt">视频提示词</label>
+              <span id="prompt-count">0 / 12000</span>
+            </div>
+            <textarea id="prompt" name="prompt" rows="9" maxlength="12000" placeholder="描述画面、人物动作、镜头和风格。可直接填写中文长提示词。" required></textarea>
+          </div>
+
+          <fieldset class="parameter-grid">
+            <legend>视频参数</legend>
+            <label>
+              <span>时长</span>
+              <select id="duration" name="duration">
+                <option value="5">5 秒</option>
+                <option value="10">10 秒</option>
+                <option value="15" selected>15 秒</option>
+              </select>
+            </label>
+            <label>
+              <span>分辨率</span>
+              <select id="resolution" name="resolution">
+                <option value="480p">480p</option>
+                <option value="720p" selected>720p</option>
+              </select>
+            </label>
+            <label>
+              <span>画面比例</span>
+              <select id="ratio" name="ratio">
+                <option value="adaptive">自适应</option>
+                <option value="21:9">21:9</option>
+                <option value="16:9" selected>16:9</option>
+                <option value="4:3">4:3</option>
+                <option value="1:1">1:1</option>
+                <option value="3:4">3:4</option>
+                <option value="9:16">9:16</option>
+              </select>
+            </label>
+            <label>
+              <span>随机种子</span>
+              <input id="seed" name="seed" type="number" step="1" value="-1" />
+            </label>
+          </fieldset>
+
+          <details class="media-panel" open>
+            <summary>
+              <span>多模态参考</span>
+              <small>可选</small>
+            </summary>
+            <p class="panel-note">图片用于人物、场景或整体参考；两段音频合计不得超过 15 秒。</p>
+            <div class="upload-grid">
+              <label class="upload-field">
+                <span>整体参考图</span>
+                <input id="reference-image" name="reference_image" type="file" accept="image/*" />
+              </label>
+              <label class="upload-field">
+                <span>人物 1</span>
+                <input id="character-1-image" name="character_1_image" type="file" accept="image/*" />
+              </label>
+              <label class="upload-field">
+                <span>人物 2</span>
+                <input id="character-2-image" name="character_2_image" type="file" accept="image/*" />
+              </label>
+              <label class="upload-field">
+                <span>背景参考图</span>
+                <input id="background-image" name="background_image" type="file" accept="image/*" />
+              </label>
+              <label class="upload-field audio-field">
+                <span>音频 1</span>
+                <input id="audio-1" name="audio_1" type="file" accept="audio/*" />
+              </label>
+              <label class="upload-field audio-field">
+                <span>音频 2</span>
+                <input id="audio-2" name="audio_2" type="file" accept="audio/*" />
+              </label>
+            </div>
+            <div class="audio-total" id="audio-total">参考音频总时长：0 秒</div>
+          </details>
+
+          <div class="form-message" id="form-message" role="alert" aria-live="polite"></div>
+          <div class="form-actions">
+            <button class="primary-button" id="submit-button" type="submit">
+              <span class="button-label">开始生成视频</span>
+              <span class="button-price">$0.10</span>
+            </button>
+            <button class="secondary-button" id="reset-button" type="button">清空内容</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="result-column" aria-labelledby="result-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">MONITOR</p>
+            <h2 id="result-title">任务监控</h2>
+          </div>
+          <div class="monitor-actions">
+            <button class="text-button" id="refresh-task" type="button" disabled>刷新</button>
+            <button class="text-button danger-text" id="stop-polling" type="button" disabled>停止查询</button>
+          </div>
+        </div>
+
+        <div class="stage-track" id="stage-track" data-stage="idle" aria-label="任务状态">
+          <div class="stage" data-step="queued"><span class="stage-node">1</span><span>排队</span></div>
+          <div class="stage-line"></div>
+          <div class="stage" data-step="processing"><span class="stage-node">2</span><span>生成</span></div>
+          <div class="stage-line"></div>
+          <div class="stage" data-step="quality"><span class="stage-node">3</span><span>质检</span></div>
+          <div class="stage-line"></div>
+          <div class="stage" data-step="completed"><span class="stage-node">4</span><span>完成</span></div>
+        </div>
+
+        <div class="task-summary">
+          <div class="task-state-block">
+            <span class="state-badge idle" id="state-badge">等待提交</span>
+            <strong id="state-title">尚未创建任务</strong>
+            <p id="state-description">填写左侧配置后开始生成，任务状态会在这里自动更新。</p>
+          </div>
+          <div class="progress-block">
+            <div class="progress-label"><span>任务进度</span><strong id="progress-value">0%</strong></div>
+            <div class="progress-rail"><div class="progress-fill" id="progress-fill"></div></div>
+          </div>
+          <dl class="task-metadata">
+            <div><dt>任务 ID</dt><dd id="task-id">—</dd></div>
+            <div><dt>已用时间</dt><dd id="elapsed-time">—</dd></div>
+            <div><dt>模型</dt><dd>mojiang-h3-ref2va</dd></div>
+            <div><dt>费用</dt><dd>$0.10 / 次</dd></div>
+          </dl>
+          <button class="copy-button" id="copy-task-id" type="button" disabled>复制任务 ID</button>
+        </div>
+
+        <div class="video-shell" id="video-shell">
+          <div class="video-empty" id="video-empty">
+            <div class="frame-corners" aria-hidden="true"></div>
+            <strong>生成结果将在这里播放</strong>
+            <span>视频完成前不会提前加载大文件</span>
+          </div>
+          <video id="result-video" controls playsinline preload="metadata" hidden></video>
+        </div>
+
+        <div class="result-actions">
+          <button class="primary-button compact" id="load-video" type="button" disabled>加载视频</button>
+          <button class="secondary-button" id="open-video" type="button" disabled>新窗口打开</button>
+          <button class="secondary-button" id="download-video" type="button" disabled>下载视频</button>
+        </div>
+
+        <details class="response-panel">
+          <summary>查看接口原始响应</summary>
+          <pre id="raw-response">尚无响应</pre>
+        </details>
+      </section>
+    </main>
+
+    <section class="history-section" aria-labelledby="history-title">
+      <div class="section-heading history-heading">
+        <div>
+          <p class="section-kicker">RECENT</p>
+          <h2 id="history-title">最近任务</h2>
+        </div>
+        <button class="text-button danger-text" id="clear-history" type="button">清空记录</button>
+      </div>
+      <p class="history-note">仅保存任务 ID、状态和提示词摘要，不保存 API 密钥或上传文件。</p>
+      <div class="history-list" id="history-list">
+        <div class="history-empty">还没有本地任务记录。</div>
+      </div>
+    </section>
+
+    <footer>
+      <span>本地工作台 · 密钥不落盘</span>
+      <span id="gateway-label">H3 网关连接检查中</span>
+    </footer>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

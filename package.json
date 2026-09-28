@@ -1,0 +1,15 @@
+{
+  "name": "mojiang-h3-api-workbench",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Local workbench for testing the Mojiang H3 video API",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/server.test.mjs",
+    "test:mock-ui": "node tests/run-mock-workbench.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
